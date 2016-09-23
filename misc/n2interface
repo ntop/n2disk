@@ -1,5 +1,9 @@
 #!/usr/bin/env bash
 
+#
+# (C) 2013-16 - ntop.org
+#
+
 # set some defaults
 END_TIME="`date +%s`"  # default end_time is now
 let START_TIME="$END_TIME-3600"  # default start_time is one hour ago
@@ -114,7 +118,7 @@ function modprobe_dummy {
     INTERFACE_NAMES=""
     NUM_INTERFACES=0
     for INTERFACE in `find $INTERFACE_FILES_PATH -type f`; do
-	cat $INTERFACE | grep interface\= > /dev/null  # make sure it's a known file
+	cat $INTERFACE | grep type\= > /dev/null  # make sure it's a known file
 	if [ $? == 0 ]; then
 	    INTERFACE_NAMES="${INTERFACE_NAMES} `basename ${INTERFACE}`"
 	    let NUM_INTERFACES="${NUM_INTERFACES}+1"
@@ -143,22 +147,28 @@ function do_up {
 
     rmmod_dummy
 
+    local OUT_FILE="${INTERFACE_FILES_PATH}/${VIRT_INTERFACE_NAME}"
+    touch ${OUT_FILE}
+    if [ $? != 0 ]; then
+	exit 1
+    fi
+
     if [ "${INTERFACE_TYPE}" == "interface" ]; then
 
 	echo "Creating virtual interface ${VIRT_INTERFACE_NAME} [associated physical pf_ring interface: ${PHYS_INTERFACE_NAME}]"
 
-	echo -e "type=${INTERFACE_TYPE}" > ${INTERFACE_FILES_PATH}/${VIRT_INTERFACE_NAME}
-	echo -e "interface=${PHYS_INTERFACE_NAME}" >> ${INTERFACE_FILES_PATH}/${VIRT_INTERFACE_NAME}
+	echo -e "type=${INTERFACE_TYPE}" > ${OUT_FILE}
+	echo -e "interface=${PHYS_INTERFACE_NAME}" >> ${OUT_FILE}
 
     elif [ "${INTERFACE_TYPE}" == "timeline" ]; then
 
 	echo "Creating virtual interface ${VIRT_INTERFACE_NAME} [timeline: ${TIMELINE_PATH} start: ${START_TIME} end: ${END_TIME}]"
 
 	# create the interface file associated with this run of the script
-	echo -e "type=${INTERFACE_TYPE}" > ${INTERFACE_FILES_PATH}/${VIRT_INTERFACE_NAME}
-	echo -e "interface=${VIRT_INTERFACE_NAME}\npath=${TIMELINE_PATH}" >> ${INTERFACE_FILES_PATH}/${VIRT_INTERFACE_NAME}
-	echo -e "start_time=`epoch_to_date_formatted ${START_TIME}`" >> ${INTERFACE_FILES_PATH}/${VIRT_INTERFACE_NAME}
-	echo -e "end_time=`epoch_to_date_formatted ${END_TIME}`" >> ${INTERFACE_FILES_PATH}/${VIRT_INTERFACE_NAME}
+	echo -e "type=${INTERFACE_TYPE}" > ${OUT_FILE}
+	echo -e "path=${TIMELINE_PATH}" >> ${OUT_FILE}
+	echo -e "start_time=`epoch_to_date_formatted ${START_TIME}`" >> ${OUT_FILE}
+	echo -e "end_time=`epoch_to_date_formatted ${END_TIME}`" >> ${OUT_FILE}
 
     else
 	echo "Unrecognized interface type: ${INTERFACE_TYPE}"
