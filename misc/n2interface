@@ -1,0 +1,257 @@
+#!/usr/bin/env bash
+
+# set some defaults
+END_TIME="`date +%s`"  # default end_time is now
+let START_TIME="$END_TIME-3600"  # default start_time is one hour ago
+INTERFACE_TYPE=""
+INTERFACE_FILES_PATH="/var/tmp/pf_ring/dummy"
+mkdir -p ${INTERFACE_FILES_PATH}
+
+function epoch_to_date_formatted {
+    echo `date +"%Y-%m-%d %H:%M:%S"  -d @"$1"`
+}
+
+function up_parse_and_clean_input {
+    local OPTIND
+    while getopts "i:t:d:s:e:" opt; do
+	case "$opt" in
+	    t)
+		if [ "${INTERFACE_TYPE}" != "" ]; then print_usage; exit 1; fi
+		INTERFACE_TYPE="timeline"
+		TIMELINE_PATH="${OPTARG}"
+		;;
+	    i)
+		if [ "${INTERFACE_TYPE}" != "" ]; then print_usage; exit 1; fi
+		INTERFACE_TYPE="interface"
+		PHYS_INTERFACE_NAME="${OPTARG}"
+		if [ "${VIRT_INTERFACE_NAME}" == "" ]; then
+		    # set only if empty and strip non alphanum
+		    VIRT_INTERFACE_NAME=`echo ${PHYS_INTERFACE_NAME} | sed -r 's/[^a-z0-9\-]+//g'`
+		fi
+		;;
+	    s)
+		START_TIME="${OPTARG}"
+		;;
+	    e)
+		END_TIME="${OPTARG}"
+		;;
+	    d)
+		VIRT_INTERFACE_NAME="${OPTARG}"
+		;;
+	esac
+    done
+
+    shift $((OPTIND-1))
+
+    [ "$1" = "--" ] && shift
+
+    if [ "${VIRT_INTERFACE_NAME}" == "" ]; then
+	echo "Must specify a virtual interface name"
+	print_usage
+	exit 1
+    fi
+
+    # only alpha and num for timeline interfaces
+    re='^[a-z0-9]+$'
+    if ! [[ ${VIRT_INTERFACE_NAME} =~ $re ]] ; then
+	echo "Allowed characters are only lowercase letters and numbers. Cannot accept ${VIRT_INTERFACE_NAME}"
+	exit 1
+    fi
+
+    if [ "${INTERFACE_TYPE}" == "interface" ]; then # we are processing a physical interface
+	# it is safe to return now...
+	return
+    fi
+
+    # if here, we are processing a timeline interface...
+
+    if [ "${TIMELINE_PATH}" == "" ]; then
+	echo "Must specify a timeline path"
+	print_usage
+	exit 1
+    fi
+
+    if [ ! -d "${TIMELINE_PATH}" ]; then
+	echo "${TIMELINE_PATH} is not a valid timeline path"
+	print_usage
+	exit 1
+    fi
+
+    if [ -f "${INTERFACE_FILES_PATH}/${VIRT_INTERFACE_NAME}" ]; then
+	echo "${INTERFACE_FILES_PATH}/${VIRT_INTERFACE_NAME} already exists, remove it or specify a different name"
+	exit 1
+    fi
+
+    # convert date strings to epochs
+    re='^[0-9]+$'
+    if ! [[ ${END_TIME} =~ $re ]] ; then
+	END_TIME=`date --date="${END_TIME}" +%s`
+	if [ $? != 0 ]; then exit 1; fi
+    fi
+    if ! [[ ${START_TIME} =~ $re ]] ; then
+	START_TIME=`date --date="${START_TIME}" +%s`
+	if [ $? != 0 ]; then exit 1; fi
+    fi
+    if [ ${END_TIME} -le ${START_TIME} ]; then
+	echo "end_time cannot precede start_time"
+	print_usage
+	exit 1
+    fi
+
+}
+
+function rmmod_dummy {
+    # load module dummy with the proper number of dummy interfaces
+    lsmod | grep dummy > /dev/null
+    if [ $? == 0 ]; then
+	rmmod dummy || exit 1
+    fi
+}
+
+function modprobe_dummy {
+
+    # find all the existing interface files and (re-)create associated dummy interfaces
+    INTERFACE_NAMES=""
+    NUM_INTERFACES=0
+    for INTERFACE in `find $INTERFACE_FILES_PATH -type f`; do
+	cat $INTERFACE | grep interface\= > /dev/null  # make sure it's a known file
+	if [ $? == 0 ]; then
+	    INTERFACE_NAMES="${INTERFACE_NAMES} `basename ${INTERFACE}`"
+	    let NUM_INTERFACES="${NUM_INTERFACES}+1"
+	fi
+    done
+
+    if [ "${NUM_INTERFACES}" -gt 0 ]; then
+	modprobe dummy numdummies=${NUM_INTERFACES}
+	if [ $? != 0 ]; then
+	    echo "Unable to load kernel module dummy with numdummies=${NUM_INTERFACES}"
+	    exit 1
+	fi
+
+	DUMMY_ID=0
+	for NAME in ${INTERFACE_NAMES}; do
+	    # echo "Setting up dummy interface ${NAME}"
+	    ip link set dummy${DUMMY_ID} name ${NAME} || exit 1
+	    ifconfig ${NAME} up || exit 1
+	    let DUMMY_ID="${DUMMY_ID}+1"
+	done
+    fi
+}
+
+function do_up {
+    up_parse_and_clean_input "$@"
+
+    rmmod_dummy
+
+    if [ "${INTERFACE_TYPE}" == "interface" ]; then
+
+	echo "Creating virtual interface ${VIRT_INTERFACE_NAME} [associated physical pf_ring interface: ${PHYS_INTERFACE_NAME}]"
+
+	echo -e "type=${INTERFACE_TYPE}" > ${INTERFACE_FILES_PATH}/${VIRT_INTERFACE_NAME}
+	echo -e "interface=${PHYS_INTERFACE_NAME}" >> ${INTERFACE_FILES_PATH}/${VIRT_INTERFACE_NAME}
+
+    elif [ "${INTERFACE_TYPE}" == "timeline" ]; then
+
+	echo "Creating virtual interface ${VIRT_INTERFACE_NAME} [timeline: ${TIMELINE_PATH} start: ${START_TIME} end: ${END_TIME}]"
+
+	# create the interface file associated with this run of the script
+	echo -e "type=${INTERFACE_TYPE}" > ${INTERFACE_FILES_PATH}/${VIRT_INTERFACE_NAME}
+	echo -e "interface=${VIRT_INTERFACE_NAME}\npath=${TIMELINE_PATH}" >> ${INTERFACE_FILES_PATH}/${VIRT_INTERFACE_NAME}
+	echo -e "start_time=`epoch_to_date_formatted ${START_TIME}`" >> ${INTERFACE_FILES_PATH}/${VIRT_INTERFACE_NAME}
+	echo -e "end_time=`epoch_to_date_formatted ${END_TIME}`" >> ${INTERFACE_FILES_PATH}/${VIRT_INTERFACE_NAME}
+
+    else
+	echo "Unrecognized interface type: ${INTERFACE_TYPE}"
+	exit 1
+    fi
+
+    modprobe_dummy
+    echo "Done"
+}
+
+function down_parse_and_clean_input {
+    local OPTIND
+    while getopts "a" opt; do
+	case "$opt" in
+	    a)
+		REMOVE_ALL_INTERFACES="yes"
+		return 0
+		;;
+	esac
+    done
+    shift $((OPTIND-1))
+
+    [ "$1" = "--" ] && shift
+    if [ $# != 1 ]  # missing virtual_interface_name
+    then
+	print_usage
+	exit 1
+    fi
+
+    VIRT_INTERFACE_NAME="$1"
+    shift
+
+    if [ ! -f "${INTERFACE_FILES_PATH}/${VIRT_INTERFACE_NAME}" ]; then
+	echo "${VIRT_INTERFACE_NAME} doesn't exist"
+	exit 1
+    fi
+}
+
+function do_down {
+    down_parse_and_clean_input "$@"
+
+    rmmod_dummy
+    if [ "${REMOVE_ALL_INTERFACES}" != "" ]; then
+	for INTERFACE in `find $INTERFACE_FILES_PATH -type f`; do
+	    rm -rf $INTERFACE
+	done
+    else
+	rm -rf "${INTERFACE_FILES_PATH}/${VIRT_INTERFACE_NAME}"
+	modprobe_dummy
+    fi
+
+}
+
+function print_usage {
+    echo -e "\nCommand line utility to map n2disk timelines or pf_ring devices to virtual interfaces\n"
+    echo -e "Usage: $0 [up | down | list] <contextual options>"
+    echo -e ""
+    echo -e "up -i <pf_ring_interface_name> [-d <virtual_interface_name>]"
+    echo -e ""
+    echo -e "up -t <timeline_path> -d <virtual_interface_name> [-s start_time] [-e end_time]"
+    echo -e "-s       : start time [default 1 hour ago]"
+    echo -e "           examples"
+    echo -e "             -s \"2016-09-22 07:42:53\""
+    echo -e "             -s 1474522973"
+    echo -e "-e       : end time   [default now       ]"
+    echo -e "           examples"
+    echo -e "             -e \"2016-09-22 07:43:53\""
+    echo -e "             -e 1474523033"
+    echo -e ""
+    echo -e "down -a | <virtual_interface_name>"
+    echo -e "-a       : remove and clear all the virual interfaces created"
+    echo -e ""
+    echo -e "Examples:"
+    echo -e "n2interface up -t /tmp -d timeline0"
+    echo -e "n2interface up -i nt:0"
+    echo -e "n2interface up -t /tmp -d timeline0 -s \"2016-09-22 07:42:53\" -e  \"2016-09-22 07:43:53\""
+    echo -e "n2interface up -i nt:0 -d napa0"
+    echo -e "n2interface down timeline0"
+    echo -e ""
+}
+
+case "$1" in
+    up)
+	OPTIND=2
+	shift
+	do_up "$@"
+	;;
+    down)
+	OPTIND=2
+	shift
+	do_down "$@"
+	;;
+    *)
+	print_usage
+	;;
+esac
