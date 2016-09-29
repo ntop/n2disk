@@ -222,6 +222,13 @@ function do_down {
 
 }
 
+function do_list {
+    for INTERFACE in `find $INTERFACE_FILES_PATH -type f`; do
+	INTERFACE="`basename ${INTERFACE}`"
+	echo -e "`ip link show ${INTERFACE}`"
+    done
+}
+
 function print_usage {
     echo -e "\nCommand line utility to map n2disk timelines or pf_ring devices to virtual interfaces\n"
     echo -e "Usage: $0 [up | down | list] <contextual options>"
@@ -260,6 +267,9 @@ case "$1" in
 	OPTIND=2
 	shift
 	do_down "$@"
+	;;
+    list)
+	do_list "$@"
 	;;
     *)
 	print_usage
