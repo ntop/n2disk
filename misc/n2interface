@@ -224,8 +224,13 @@ function do_down {
 
 function do_list {
     for INTERFACE in `find $INTERFACE_FILES_PATH -type f`; do
-	INTERFACE="`basename ${INTERFACE}`"
-	echo -e "`ip link show ${INTERFACE}`"
+	echo "`basename ${INTERFACE}`"
+
+	while read p; do
+	    echo -e "\t${p}"
+	done < "${INTERFACE}"
+
+	# echo -e "`ip link show ${INTERFACE}`"
     done
 }
 
