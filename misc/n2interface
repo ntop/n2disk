@@ -48,9 +48,9 @@ function up_parse_and_clean_input {
     fi
 
     # only alpha and num for timeline interfaces
-    re='^[a-z0-9]+$'
+    re='^[a-z0-9\-]+$'
     if ! [[ ${VIRT_INTERFACE_NAME} =~ $re ]] ; then
-	echo "Allowed characters are only lowercase letters and numbers. Cannot accept ${VIRT_INTERFACE_NAME}"
+	echo "Allowed characters are only lowercase letters, numbers and -. Cannot accept ${VIRT_INTERFACE_NAME}"
 	exit 1
     fi
 
