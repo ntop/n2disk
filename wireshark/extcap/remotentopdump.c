@@ -410,8 +410,8 @@ void extcap_capture() {
     }
   }
 
-  snprintf(command, command_len, "npcapextract -t %s -b \"%s\" -e \"%s\" -f \"%s\" -O | ndpiReader -i - --capture --fifo -",
-    ntopdump_path, ntopdump_start, ntopdump_end, extcap_capture_filter);
+  snprintf(command, command_len, "npcapextract -t %s -b \"%s\" -e \"%s\" -f \"%s\" -O %s",
+    ntopdump_path, ntopdump_start, ntopdump_end, extcap_capture_filter, ntopdump_ndpi ? "| ndpiReader -i - --capture --fifo -" : "");
 
   session = setup_ssh_connection();
 

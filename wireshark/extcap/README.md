@@ -33,3 +33,5 @@ running the capture, please configure all the settings to connect to the remote 
 by clicking on the gear icon of the corresponding interface, and set a capture filter as
 on a standard interface if needed.
 
+Please note that in order to use the "nDPI inspection" feature, ndpiReader (part of nDPI)
+should be installed on the remote machine.
