@@ -28,9 +28,11 @@
 #define DLT_EN10MB	1
 #endif
 
+#define REMOTENTOPDUMP_INTERFACE "remote-pfring-interface"
 #define REMOTENTOPDUMP_TIMELINE "remote-n2disk-timeline"
 #define REMOTENTOPDUMP_MAX_DATE_LEN     26
 #define REMOTENTOPDUMP_MAX_PATH_LEN     256
+#define REMOTENTOPDUMP_MAX_NAME_LEN     64
 #define REMOTENTOPDUMP_SSH_BLOCK_SIZE   1024
 #define REMOTENTOPDUMP_VERSION_MAJOR    "0"
 #define REMOTENTOPDUMP_VERSION_MINOR    "1"
@@ -46,6 +48,7 @@
 #define EXTCAP_OPT_FIFO				'F'
 #define EXTCAP_OPT_DEBUG			'D'
 #define REMOTENTOPDUMP_OPT_HELP			'h'
+#define REMOTENTOPDUMP_OPT_IFNAME		'n'
 #define REMOTENTOPDUMP_OPT_PATH			't'
 #define REMOTENTOPDUMP_OPT_START_TIME		's'
 #define REMOTENTOPDUMP_OPT_END_TIME		'e'
@@ -73,6 +76,7 @@ static struct option longopts[] = {
 
   /* custom extcap options */
   { "help", 			no_argument, 		NULL, REMOTENTOPDUMP_OPT_HELP },
+  { "ifname", 			required_argument,	NULL, REMOTENTOPDUMP_OPT_IFNAME },
   { "timeline-path", 		required_argument,	NULL, REMOTENTOPDUMP_OPT_PATH },
   { "start", 			required_argument, 	NULL, REMOTENTOPDUMP_OPT_START_TIME },
   { "end", 			required_argument, 	NULL, REMOTENTOPDUMP_OPT_END_TIME },
@@ -99,6 +103,7 @@ typedef struct _extcap_interface {
 } extcap_interface;
 
 static extcap_interface extcap_interfaces[] = {
+  { REMOTENTOPDUMP_INTERFACE, "Remote PF_RING interface", DLT_EN10MB, NULL, "The EN10MB Ethernet2 DLT" },
   { REMOTENTOPDUMP_TIMELINE,  "Remote n2disk timeline" , DLT_EN10MB, NULL, "The EN10MB Ethernet2 DLT" }
 };
 static size_t extcap_interfaces_num = sizeof(extcap_interfaces) / sizeof(extcap_interface);
@@ -106,6 +111,7 @@ static size_t extcap_interfaces_num = sizeof(extcap_interfaces) / sizeof(extcap_
 static char *extcap_selected_interface   = NULL;
 static char *extcap_capture_filter       = NULL;
 static char *extcap_capture_fifo         = NULL;
+static char *ntopdump_ifname               = NULL;
 static char *ntopdump_path               = NULL;
 static char *ntopdump_start              = NULL;
 static char *ntopdump_end                = NULL;
@@ -300,7 +306,15 @@ void extcap_config() {
 
   if(!extcap_selected_interface) return;
 
-  if (!strncmp(extcap_selected_interface, REMOTENTOPDUMP_TIMELINE, strlen(REMOTENTOPDUMP_TIMELINE))) {
+  if(!strncmp(extcap_selected_interface, REMOTENTOPDUMP_INTERFACE, strlen(REMOTENTOPDUMP_INTERFACE))) {
+    u_int nameidx;
+
+    nameidx = argidx;
+    printf("arg {number=%u}{call=--ifname}"
+	   "{display=Interface Name}{type=string}"
+	   "{tooltip=An interface name recognized by PF_FING (e.g. zc:eth1)}\n", argidx++);
+
+  } else if (!strncmp(extcap_selected_interface, REMOTENTOPDUMP_TIMELINE, strlen(REMOTENTOPDUMP_TIMELINE))) {
     time_t timer;
     char time_buffer_start[REMOTENTOPDUMP_MAX_DATE_LEN], time_buffer_end[REMOTENTOPDUMP_MAX_DATE_LEN];
     struct tm* tm_info;
@@ -335,25 +349,25 @@ void extcap_config() {
 #ifndef __APPLE__
     }
 #endif
-
-    printf("arg {number=%u}{call=--ndpi}"
-	   "{display=enable nDPI inspection}{type=boolflag}{default=true}"
-	   "{tooltip=Enable nDPI inspection to provide L7 informations}\n", argidx++);
-
-    printf("arg {number=%u}{call=--ssh-host}{display=Remote SSH server address}"
-           "{type=string}{tooltip=The remote SSH host (IP address or hostname)}{required=true}\n", argidx++);
-    printf("arg {number=%u}{call=--ssh-port}{display=Remote SSH server port}"
-           "{type=unsigned}{default=22}{tooltip=The remote SSH host port (1-65535)}"
-           "{range=1,65535}\n", argidx++);
-    printf("arg {number=%u}{call=--ssh-username}{display=Remote SSH server username}"
-           "{type=string}{default=root}{tooltip=The remote SSH username}\n", argidx++);
-    printf("arg {number=%u}{call=--ssh-password}{display=Remote SSH server password}"
-           "{type=password}{tooltip=The SSH password (used when SSH key in not available, empty to auto detect public key)}\n", argidx++);
-    printf("arg {number=%u}{call=--ssh-key}{display=Path to SSH private key}"
-           "{type=fileselect}{tooltip=The path on the local filesystem of the private ssh key, empty to auto detect public key}\n", argidx++);
-    printf("arg {number=%u}{call=--ssh-key-passphrase}{display=SSH key passphrase}"
-           "{type=password}{tooltip=Passphrase to unlock the SSH private or public key}\n", argidx++);
   }
+
+  printf("arg {number=%u}{call=--ndpi}"
+         "{display=enable nDPI inspection}{type=boolflag}{default=true}"
+ 	 "{tooltip=Enable nDPI inspection to provide L7 informations}\n", argidx++);
+
+  printf("arg {number=%u}{call=--ssh-host}{display=Remote SSH server address}"
+         "{type=string}{tooltip=The remote SSH host (IP address or hostname)}{required=true}\n", argidx++);
+  printf("arg {number=%u}{call=--ssh-port}{display=Remote SSH server port}"
+         "{type=unsigned}{default=22}{tooltip=The remote SSH host port (1-65535)}"
+         "{range=1,65535}\n", argidx++);
+  printf("arg {number=%u}{call=--ssh-username}{display=Remote SSH server username}"
+         "{type=string}{default=root}{tooltip=The remote SSH username}\n", argidx++);
+  printf("arg {number=%u}{call=--ssh-password}{display=Remote SSH server password}"
+         "{type=password}{tooltip=The SSH password (used when SSH key in not available, empty to auto detect public key)}\n", argidx++);
+  printf("arg {number=%u}{call=--ssh-key}{display=Path to SSH private key}"
+         "{type=fileselect}{tooltip=The path on the local filesystem of the private ssh key, empty to auto detect public key}\n", argidx++);
+  printf("arg {number=%u}{call=--ssh-key-passphrase}{display=SSH key passphrase}"
+         "{type=password}{tooltip=Passphrase to unlock the SSH private or public key}\n", argidx++);
 }
 
 void extcap_capture() {
@@ -364,21 +378,6 @@ void extcap_capture() {
   FILE *fp = NULL;
   int nbytes;
   int command_len;
-
-  if (ntopdump_path == NULL) {
-    fprintf(stderr, "Timeline path needed\n");
-    return;
-  }
-
-  if (ntopdump_start == NULL) {
-    fprintf(stderr, "Start time needed\n");
-    return;
-  }
-
-  if (ntopdump_end == NULL) {
-    fprintf(stderr, "End time needed\n");
-    return;
-  }
 
   if (ntopdump_ssh_host == NULL) {
     fprintf(stderr, "Hostname needed\n");
@@ -393,12 +392,47 @@ void extcap_capture() {
   if (extcap_capture_filter == NULL)
     extcap_capture_filter = strdup("");
 
-  command_len = REMOTENTOPDUMP_MAX_PATH_LEN + 2 * strlen("2017-05-23 17:00:00") + strlen(extcap_capture_filter) + 100; 
-  command = (char *) calloc(command_len, sizeof(char)); 
+  if (strcmp(extcap_selected_interface, REMOTENTOPDUMP_TIMELINE) == 0) {
 
-  if (command == NULL) {
-    fprintf(stderr, "Failure allocating memory\n");
-    return;
+    if (ntopdump_path == NULL) {
+      fprintf(stderr, "Timeline path needed\n");
+      return;
+    }
+
+    if (ntopdump_start == NULL) {
+      fprintf(stderr, "Start time needed\n");
+      return;
+    }
+
+    if (ntopdump_end == NULL) {
+      fprintf(stderr, "End time needed\n");
+      return;
+    }
+
+    command_len = REMOTENTOPDUMP_MAX_PATH_LEN + 2 * strlen("2017-05-23 17:00:00") + strlen(extcap_capture_filter) + 100; 
+    command = (char *) calloc(command_len, sizeof(char)); 
+
+    if (command == NULL) {
+      fprintf(stderr, "Failure allocating memory\n");
+      return;
+    }
+
+    snprintf(command, command_len, "npcapextract -t %s -b \"%s\" -e \"%s\" -f \"%s\" -O %s",
+      ntopdump_path, ntopdump_start, ntopdump_end, extcap_capture_filter, ntopdump_ndpi ? "| ndpiReader -i - --capture --fifo -" : "");
+
+  } else {
+
+    command_len = REMOTENTOPDUMP_MAX_NAME_LEN + strlen(extcap_capture_filter) + 100; 
+    command = (char *) calloc(command_len, sizeof(char)); 
+
+    if (command == NULL) {
+      fprintf(stderr, "Failure allocating memory\n");
+      return;
+    }
+
+    snprintf(command, command_len, "pfcount -i %s -f %s -o - %s",
+      ntopdump_ifname, extcap_capture_filter, ntopdump_ndpi ? "| ndpiReader -i - --capture --fifo -" : "");
+
   }
 
   if (extcap_capture_fifo != NULL && strcmp(extcap_capture_fifo, "-") != 0) {
@@ -409,9 +443,6 @@ void extcap_capture() {
       return;
     }
   }
-
-  snprintf(command, command_len, "npcapextract -t %s -b \"%s\" -e \"%s\" -f \"%s\" -O %s",
-    ntopdump_path, ntopdump_start, ntopdump_end, extcap_capture_filter, ntopdump_ndpi ? "| ndpiReader -i - --capture --fifo -" : "");
 
   session = setup_ssh_connection();
 
@@ -514,6 +545,10 @@ int main(int argc, char *argv[]) {
       extcap_print_help();
       return EXIT_SUCCESS;
       break;
+    case REMOTENTOPDUMP_OPT_IFNAME:
+      if (ntopdump_ifname == NULL)
+        ntopdump_ifname = strndup(optarg, REMOTENTOPDUMP_MAX_NAME_LEN);
+      break;
     case REMOTENTOPDUMP_OPT_PATH:
       if (ntopdump_path == NULL)
         ntopdump_path = strdup(optarg);
@@ -580,6 +615,7 @@ int main(int argc, char *argv[]) {
   if(extcap_selected_interface)   free(extcap_selected_interface);
   if(extcap_capture_filter)       free(extcap_capture_filter);
   if(extcap_capture_fifo)         free(extcap_capture_fifo);
+  if(ntopdump_ifname)             free(ntopdump_ifname);
   if(ntopdump_path)               free(ntopdump_path);
   if(ntopdump_start)              free(ntopdump_start);
   if(ntopdump_end)                free(ntopdump_end);
