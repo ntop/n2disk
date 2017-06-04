@@ -307,9 +307,7 @@ void extcap_config() {
   if(!extcap_selected_interface) return;
 
   if(!strncmp(extcap_selected_interface, REMOTENTOPDUMP_INTERFACE, strlen(REMOTENTOPDUMP_INTERFACE))) {
-    u_int nameidx;
 
-    nameidx = argidx;
     printf("arg {number=%u}{call=--ifname}"
 	   "{display=Interface Name}{type=string}"
 	   "{tooltip=An interface name recognized by PF_FING (e.g. zc:eth1)}\n", argidx++);
@@ -430,7 +428,7 @@ void extcap_capture() {
       return;
     }
 
-    snprintf(command, command_len, "pfcount -i %s -f %s -o - %s",
+    snprintf(command, command_len, "pfcount -i %s -f \"%s\" -o - %s",
       ntopdump_ifname, extcap_capture_filter, ntopdump_ndpi ? "| ndpiReader -i - --capture --fifo -" : "");
 
   }
@@ -610,7 +608,7 @@ int main(int argc, char *argv[]) {
 
   if(defer_dlts) extcap_dlts();
   else if(defer_config) extcap_config();
-  else if(defer_capture && ntopdump_path) extcap_capture();
+  else if(defer_capture && (ntopdump_ifname || ntopdump_path)) extcap_capture();
 
   if(extcap_selected_interface)   free(extcap_selected_interface);
   if(extcap_capture_filter)       free(extcap_capture_filter);
