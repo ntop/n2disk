@@ -4,8 +4,8 @@ The extcap interface in Wireshark is a plugin-based mechanism to allow external
 executables to be used as traffic source in case the capture interface is not a 
 standard network interface directly recognised by Wireshark.
 
-The remotentopdump extcap module can be used to extract traffic from a remote n2disk 
-dumpset in Wireshark.
+The remotentopdump extcap module can be used to open a PF_RING interface on a remote
+machine or to extract traffic from a remote n2disk dumpset in Wireshark.
 
 In order to get started with the remotentopdump module, you need to compile the module:
 
@@ -28,10 +28,10 @@ You can read the extcap folder from the Wireshark menu:
 
 At this point you are ready to start Wireshark and start using the remotentopdump module.
 
-Once you start Wireshark, you will see a new interface "Remote n2disk timeline". Before 
-running the capture, please configure all the settings to connect to the remote machine
-by clicking on the gear icon of the corresponding interface, and set a capture filter as
-on a standard interface if needed.
+Once you start Wireshark, you will see two additional interfaces, "Remote PF_RING interface" 
+and "Remote n2disk timeline". Before running the capture, please configure all the settings 
+to connect to the remote machine by clicking on the gear icon of the corresponding interface, 
+and set a capture filter as on a standard interface if needed.
 
 Please note that in order to use the "nDPI inspection" feature, ndpiReader (part of nDPI)
 should be installed on the remote machine.
