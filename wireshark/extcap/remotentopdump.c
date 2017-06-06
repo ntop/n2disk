@@ -38,6 +38,10 @@
 #define REMOTENTOPDUMP_VERSION_MINOR    "1"
 #define REMOTENTOPDUMP_VERSION_RELEASE  "0"
 
+#define DEFAULT_TIMELINE_PATH "/storage"
+#define DEFAULT_SSH_USER      "root"
+#define DEFAULT_SSH_PORT      22
+
 #define EXTCAP_OPT_LIST_INTERFACES		'l'
 #define EXTCAP_OPT_VERSION			'v'
 #define EXTCAP_OPT_LIST_DLTS			'L'
@@ -325,8 +329,8 @@ void extcap_config() {
     strftime(time_buffer_start, REMOTENTOPDUMP_MAX_DATE_LEN, "%Y-%m-%d %H:%M:%S", tm_info);
 
     printf("arg {number=%u}{call=--timeline-path}"
-	   "{display=n2disk timeline path}{type=string}{default=/storage}"
-	   "{tooltip=The n2disk timeline path (e.g. /storage/n2disk/eth1/timeline)}\n", argidx++);
+	   "{display=n2disk timeline path}{type=string}{default=%s}"
+	   "{tooltip=The n2disk timeline path (e.g. /storage/n2disk/eth1/timeline)}\n", argidx++, DEFAULT_TIMELINE_PATH);
 
 #ifndef __APPLE__
     if (wireshark_version() > 2.2) {
@@ -356,10 +360,10 @@ void extcap_config() {
   printf("arg {number=%u}{call=--ssh-host}{display=Remote SSH server address}"
          "{type=string}{tooltip=The remote SSH host (IP address or hostname)}{required=true}\n", argidx++);
   printf("arg {number=%u}{call=--ssh-port}{display=Remote SSH server port}"
-         "{type=unsigned}{default=22}{tooltip=The remote SSH host port (1-65535)}"
-         "{range=1,65535}\n", argidx++);
+         "{type=unsigned}{default=%d}{tooltip=The remote SSH host port (1-65535)}"
+         "{range=1,65535}\n", argidx++, DEFAULT_SSH_PORT);
   printf("arg {number=%u}{call=--ssh-username}{display=Remote SSH server username}"
-         "{type=string}{default=root}{tooltip=The remote SSH username}\n", argidx++);
+         "{type=string}{default=%s}{tooltip=The remote SSH username}\n", argidx++, DEFAULT_SSH_USER);
   printf("arg {number=%u}{call=--ssh-password}{display=Remote SSH server password}"
          "{type=password}{tooltip=The SSH password (used when SSH key in not available, empty to auto detect public key)}\n", argidx++);
   printf("arg {number=%u}{call=--ssh-key}{display=Path to SSH private key}"
@@ -383,8 +387,7 @@ void extcap_capture() {
   }
 
   if (ntopdump_ssh_username == NULL) {
-    fprintf(stderr, "Username needed\n");
-    return;
+    ntopdump_ssh_username = strdup(DEFAULT_SSH_USER);
   }
 
   if (extcap_capture_filter == NULL)
@@ -393,8 +396,7 @@ void extcap_capture() {
   if (strcmp(extcap_selected_interface, REMOTENTOPDUMP_TIMELINE) == 0) {
 
     if (ntopdump_path == NULL) {
-      fprintf(stderr, "Timeline path needed\n");
-      return;
+      ntopdump_path = strdup(DEFAULT_TIMELINE_PATH);
     }
 
     if (ntopdump_start == NULL) {
@@ -608,7 +610,7 @@ int main(int argc, char *argv[]) {
 
   if(defer_dlts) extcap_dlts();
   else if(defer_config) extcap_config();
-  else if(defer_capture && (ntopdump_ifname || ntopdump_path)) extcap_capture();
+  else if(defer_capture) extcap_capture();
 
   if(extcap_selected_interface)   free(extcap_selected_interface);
   if(extcap_capture_filter)       free(extcap_capture_filter);
