@@ -434,7 +434,7 @@ void extcap_capture() {
       return;
     }
 
-    snprintf(command, command_len, "pfcount -i %s -f \"%s\" -o - %s",
+    snprintf(command, command_len, "sudo pfcount -i %s -f \"%s\" -o - %s",
       ntopdump_ifname, extcap_capture_filter, ntopdump_ndpi ? "| ndpiReader -i - --capture --fifo -" : "");
 
   }
