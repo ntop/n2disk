@@ -162,7 +162,7 @@ static ssh_channel setup_ssh_channel(ssh_session session) {
 
 static ssh_session setup_ssh_connection() {
   ssh_session session;
-  int rc;
+  int rc1 = 0, rc2 = 0, rc3 = 0;
 
   session = ssh_new();
 
@@ -200,9 +200,9 @@ static ssh_session setup_ssh_connection() {
 
     printf("Connecting using public key in %s\n", ntopdump_ssh_key);
 
-    rc = ssh_pki_import_privkey_file(ntopdump_ssh_key, ntopdump_ssh_key_passphrase, NULL, NULL, &pkey);
+    rc1 = ssh_pki_import_privkey_file(ntopdump_ssh_key, ntopdump_ssh_key_passphrase, NULL, NULL, &pkey);
 
-    if (rc == SSH_OK) {
+    if (rc1 == SSH_OK) {
       if (ssh_userauth_publickey(session, NULL, pkey) == SSH_AUTH_SUCCESS) {
         ssh_key_free(pkey);
         return session;
@@ -213,18 +213,22 @@ static ssh_session setup_ssh_connection() {
 
   printf("Connecting using public key\n");
 
-  if (ssh_userauth_publickey_auto(session, ntopdump_ssh_username, ntopdump_ssh_key_passphrase) == SSH_AUTH_SUCCESS)
+  rc2 = ssh_userauth_publickey_auto(session, ntopdump_ssh_username, ntopdump_ssh_key_passphrase);
+
+  if (rc2 == SSH_AUTH_SUCCESS)
     return session;
 
   if (ntopdump_ssh_password != NULL) {
 
     printf("Connecting using password\n");
 
-    if (ssh_userauth_password(session, ntopdump_ssh_username, ntopdump_ssh_password) == SSH_AUTH_SUCCESS)
+    rc3 = ssh_userauth_password(session, ntopdump_ssh_username, ntopdump_ssh_password);
+
+    if (rc3 == SSH_AUTH_SUCCESS)
       return session;
   }
 
-  fprintf(stderr, "Unable to authenticate\n");
+  fprintf(stderr, "Unable to authenticate (%d, %d, %d)\n", rc1, rc2, rc3);
 
   ssh_disconnect(session);
 
