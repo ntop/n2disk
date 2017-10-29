@@ -59,6 +59,7 @@
 #define REMOTENTOPDUMP_OPT_START_TIME_EPOCH	'S'
 #define REMOTENTOPDUMP_OPT_END_TIME_EPOCH	'E'
 #define REMOTENTOPDUMP_OPT_NDPI			'd'
+#define REMOTENTOPDUMP_OPT_REMOTE_FILTER	'r'
 #define REMOTENTOPDUMP_OPT_SSH_HOST             'H'
 #define REMOTENTOPDUMP_OPT_SSH_PORT             'P'
 #define REMOTENTOPDUMP_OPT_SSH_USERNAME         'U'
@@ -87,6 +88,7 @@ static struct option longopts[] = {
   { "start-epoch", 		required_argument, 	NULL, REMOTENTOPDUMP_OPT_START_TIME_EPOCH },
   { "end-epoch", 		required_argument, 	NULL, REMOTENTOPDUMP_OPT_END_TIME_EPOCH },
   { "ndpi", 			no_argument, 		NULL, REMOTENTOPDUMP_OPT_NDPI },
+  { "remote-filter",            required_argument,      NULL, REMOTENTOPDUMP_OPT_REMOTE_FILTER },
   { "ssh-host",                 required_argument,      NULL, REMOTENTOPDUMP_OPT_SSH_HOST },
   { "ssh-port",                 required_argument,      NULL, REMOTENTOPDUMP_OPT_SSH_PORT },
   { "ssh-username",             required_argument,      NULL, REMOTENTOPDUMP_OPT_SSH_USERNAME },
@@ -314,13 +316,13 @@ void extcap_config() {
 
   if(!extcap_selected_interface) return;
 
-  if(!strncmp(extcap_selected_interface, REMOTENTOPDUMP_INTERFACE, strlen(REMOTENTOPDUMP_INTERFACE))) {
+  if(strncmp(extcap_selected_interface, REMOTENTOPDUMP_INTERFACE, strlen(REMOTENTOPDUMP_INTERFACE)) == 0) {
 
     printf("arg {number=%u}{call=--ifname}"
-	   "{display=Interface Name}{type=string}"
+	   "{display=Remote interface name}{type=string}"
 	   "{tooltip=An interface name recognized by PF_FING (e.g. zc:eth1)}\n", argidx++);
 
-  } else if (!strncmp(extcap_selected_interface, REMOTENTOPDUMP_TIMELINE, strlen(REMOTENTOPDUMP_TIMELINE))) {
+  } else if (strncmp(extcap_selected_interface, REMOTENTOPDUMP_TIMELINE, strlen(REMOTENTOPDUMP_TIMELINE)) == 0) {
     time_t timer;
     char time_buffer_start[REMOTENTOPDUMP_MAX_DATE_LEN], time_buffer_end[REMOTENTOPDUMP_MAX_DATE_LEN];
     struct tm* tm_info;
@@ -356,6 +358,10 @@ void extcap_config() {
     }
 #endif
   }
+
+  printf("arg {number=%u}{call=--remote-filter}"
+         "{display=Remote capture filter}{type=string}"
+ 	 "{tooltip=The remote capture filter}\n", argidx++);
 
   printf("arg {number=%u}{call=--ndpi}"
          "{display=enable nDPI inspection}{type=boolflag}{default=true}"
@@ -538,7 +544,8 @@ int main(int argc, char *argv[]) {
       defer_capture = 1; defer_dlts = defer_config = 0;
       break;
     case EXTCAP_OPT_CAPTURE_FILTER:
-      extcap_capture_filter = strdup(optarg);
+      /* Set by REMOTENTOPDUMP_OPT_REMOTE_FILTER 
+       * extcap_capture_filter = strdup(optarg); */
       break;
     case EXTCAP_OPT_FIFO:
       extcap_capture_fifo = strdup(optarg);
@@ -578,6 +585,10 @@ int main(int argc, char *argv[]) {
       tm_info = localtime(&epoch);
       strftime(date_str, REMOTENTOPDUMP_MAX_DATE_LEN, "%Y-%m-%d %H:%M:%S", tm_info);
       ntopdump_end = strndup(date_str, REMOTENTOPDUMP_MAX_DATE_LEN);
+      break;
+    case REMOTENTOPDUMP_OPT_REMOTE_FILTER:
+      if (extcap_capture_filter == NULL)
+        extcap_capture_filter = strdup(optarg);
       break;
     case REMOTENTOPDUMP_OPT_NDPI:
       ntopdump_ndpi = 1;
