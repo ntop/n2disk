@@ -59,6 +59,7 @@
 #define REMOTENTOPDUMP_OPT_START_TIME_EPOCH	'S'
 #define REMOTENTOPDUMP_OPT_END_TIME_EPOCH	'E'
 #define REMOTENTOPDUMP_OPT_NDPI			'd'
+#define REMOTENTOPDUMP_OPT_REMOTE_L7_FILTER	'7'
 #define REMOTENTOPDUMP_OPT_REMOTE_FILTER	'r'
 #define REMOTENTOPDUMP_OPT_SSH_HOST             'H'
 #define REMOTENTOPDUMP_OPT_SSH_PORT             'P'
@@ -88,6 +89,7 @@ static struct option longopts[] = {
   { "start-epoch", 		required_argument, 	NULL, REMOTENTOPDUMP_OPT_START_TIME_EPOCH },
   { "end-epoch", 		required_argument, 	NULL, REMOTENTOPDUMP_OPT_END_TIME_EPOCH },
   { "ndpi", 			no_argument, 		NULL, REMOTENTOPDUMP_OPT_NDPI },
+  { "remote-l7-filter",         required_argument,      NULL, REMOTENTOPDUMP_OPT_REMOTE_L7_FILTER },
   { "remote-filter",            required_argument,      NULL, REMOTENTOPDUMP_OPT_REMOTE_FILTER },
   { "ssh-host",                 required_argument,      NULL, REMOTENTOPDUMP_OPT_SSH_HOST },
   { "ssh-port",                 required_argument,      NULL, REMOTENTOPDUMP_OPT_SSH_PORT },
@@ -122,6 +124,7 @@ static char *ntopdump_path               = NULL;
 static char *ntopdump_start              = NULL;
 static char *ntopdump_end                = NULL;
 static int ntopdump_ndpi                 = 0;
+static char *ntopdump_l7_filter          = NULL;
 static char *ntopdump_ssh_host           = NULL;
 static int ntopdump_ssh_port             = 0;
 static char *ntopdump_ssh_username       = NULL;
@@ -366,7 +369,9 @@ void extcap_config() {
   printf("arg {number=%u}{call=--ndpi}"
          "{display=enable nDPI inspection}{type=boolflag}{default=true}"
  	 "{tooltip=Enable nDPI inspection to provide L7 informations}\n", argidx++);
-
+  printf("arg {number=%u}{call=--remote-l7-filter}"
+         "{display=Remote nDPI protocol filter}{type=string}"
+ 	 "{tooltip=The remote nDPI L7 protocol capture filter (e.g. Dropbox)}\n", argidx++);
   printf("arg {number=%u}{call=--ssh-host}{display=Remote SSH server address}"
          "{type=string}{tooltip=The remote SSH host (IP address or hostname)}{required=true}\n", argidx++);
   printf("arg {number=%u}{call=--ssh-port}{display=Remote SSH server port}"
@@ -384,6 +389,7 @@ void extcap_config() {
 
 void extcap_capture() {
   char buffer[REMOTENTOPDUMP_SSH_BLOCK_SIZE];
+  char ndpi_command[128];
   char *command;
   ssh_session session = NULL;
   ssh_channel channel = NULL;
@@ -402,6 +408,12 @@ void extcap_capture() {
 
   if (extcap_capture_filter == NULL)
     extcap_capture_filter = strdup("");
+
+  if (ntopdump_ndpi)
+    snprintf(ndpi_command, sizeof(ndpi_command), " | ndpiReader -i - --capture --fifo - %s%s",
+      ntopdump_l7_filter ? " --ndpi-proto-filter " : "", ntopdump_l7_filter ? ntopdump_l7_filter : "");
+  else
+    snprintf(ndpi_command, sizeof(ndpi_command), "");
 
   if (strcmp(extcap_selected_interface, REMOTENTOPDUMP_TIMELINE) == 0) {
 
@@ -428,7 +440,7 @@ void extcap_capture() {
     }
 
     snprintf(command, command_len, "npcapextract -t %s -b \"%s\" -e \"%s\" -f \"%s\" -O %s",
-      ntopdump_path, ntopdump_start, ntopdump_end, extcap_capture_filter, ntopdump_ndpi ? "| ndpiReader -i - --capture --fifo -" : "");
+      ntopdump_path, ntopdump_start, ntopdump_end, extcap_capture_filter, ndpi_command);
 
   } else {
 
@@ -441,7 +453,7 @@ void extcap_capture() {
     }
 
     snprintf(command, command_len, "sudo pfcount -i %s -f \"%s\" -o - %s",
-      ntopdump_ifname, extcap_capture_filter, ntopdump_ndpi ? "| ndpiReader -i - --capture --fifo -" : "");
+      ntopdump_ifname, extcap_capture_filter, ndpi_command);
 
   }
 
@@ -593,6 +605,10 @@ int main(int argc, char *argv[]) {
     case REMOTENTOPDUMP_OPT_NDPI:
       ntopdump_ndpi = 1;
       break;
+    case REMOTENTOPDUMP_OPT_REMOTE_L7_FILTER:
+      if (ntopdump_l7_filter == NULL)
+        ntopdump_l7_filter = strdup(optarg);
+      break;
     case REMOTENTOPDUMP_OPT_SSH_HOST:
       if (ntopdump_ssh_host == NULL)
         ntopdump_ssh_host = strdup(optarg);
@@ -632,6 +648,7 @@ int main(int argc, char *argv[]) {
   if(extcap_capture_fifo)         free(extcap_capture_fifo);
   if(ntopdump_ifname)             free(ntopdump_ifname);
   if(ntopdump_path)               free(ntopdump_path);
+  if(ntopdump_l7_filter)          free(ntopdump_l7_filter);
   if(ntopdump_start)              free(ntopdump_start);
   if(ntopdump_end)                free(ntopdump_end);
   if(ntopdump_ssh_host)           free(ntopdump_ssh_host);
