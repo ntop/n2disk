@@ -431,7 +431,7 @@ void extcap_capture() {
       return;
     }
 
-    command_len = REMOTENTOPDUMP_MAX_PATH_LEN + 2 * strlen("2017-05-23 17:00:00") + strlen(extcap_capture_filter) + 100; 
+    command_len = REMOTENTOPDUMP_MAX_PATH_LEN + 2 * strlen("2017-05-23 17:00:00") + strlen(extcap_capture_filter) + strlen(ndpi_command) + 128; 
     command = (char *) calloc(command_len, sizeof(char)); 
 
     if (command == NULL) {
@@ -454,7 +454,6 @@ void extcap_capture() {
 
     snprintf(command, command_len, "sudo pfcount -i %s -f \"%s\" -o - %s",
       ntopdump_ifname, extcap_capture_filter, ndpi_command);
-
   }
 
   if (extcap_capture_fifo != NULL && strcmp(extcap_capture_fifo, "-") != 0) {
