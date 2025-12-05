@@ -1,7 +1,7 @@
 Utilities
 =========
 
-n2disk comes with a set of companion tools for traffic replay, indexing, extraction. The most important tools are described in this section.
+n2disk comes with a set of companion tools for traffic replay, indexing, extraction, and storage management. The most important tools are described in this section.
 
 .. toctree::
     :maxdepth: 2
@@ -11,4 +11,8 @@ n2disk comes with a set of companion tools for traffic replay, indexing, extract
     npcapindex
     npcapextract
     npcapdecompress
+    npcapprintindex
+    npcapmanage
+    npcapmove
+    npcaprepair
     ndedup
