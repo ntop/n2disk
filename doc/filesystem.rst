@@ -1,8 +1,15 @@
 Disk Partitioning and Formatting
 ================================
 
-n2disk writes files sequentially. In our experience the XFS filesystem is the best option you can select when
-writing to HDDs, although other filesystems such as EXT4 can also be used. Supposing that you have created the 
+n2disk writes files sequentially to disk, using Direct IO (O_DIRECT). The disk can be a single
+disk, a RAID volume, or multiple disks (e.g. in case of NVMEs). This section describes what are
+the best practices for formatting the volume depending on disk type (HDD vs SSD).
+
+HDDs
+----
+
+In our experience the XFS filesystem is the best option you can select when writing to HDDs, 
+although other filesystems such as EXT4 can also be used. Supposing that you have created the 
 /dev/sda1 disk partition, you can format it as follows:
 
 .. code-block:: console
@@ -16,6 +23,9 @@ Once you have formatted the disk you can mount it as follows:
    mount -o noatime,nodiratime,attr2,nobarrier,logbufs=8,logbsize=256k,osyncisdsync /dev/sda1 /storage/ 
 
 Note that for small partition sizes, you might need to adapt some of the above parameters.
+
+SSDs
+----
 
 If you are using SSDs, EXT4 usually performs better, you can format your partition as follows (assuming you have a RAID 0 array with 16 SSDs):
 
@@ -41,8 +51,12 @@ It is also recommended to set the "noop" scheduler with SSDs:
 
    echo noop > /sys/block/sda/queue/scheduler
 
-You can test the disk write performance as explained in chapter 4. Please note that depending on the disk types 
-and controller, your write performance can be influenced by the chunk size (-C option) that specifies. the minimal 
+Additional Notes
+----------------
+
+You can test the disk write performance as explained in chapter 4.
+
+Note that depending on the disk types and controller, your write performance can be influenced by the chunk size (-C option) that specifies the minimal 
 unit of data written to disk. Values in the range between 64 and 512 KBytes should guaranteed adequate performance, 
-although some combination of disks/controllers operate better with 1024 KBytes or more. You can check that with “-e 1”.
+although some combination of disks/controllers operate better with 1024 KBytes or more. You can check that with "-e 1".
 
