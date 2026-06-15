@@ -3,7 +3,7 @@ Installation
 
 At http://packages.ntop.org we build binary n2disk packages ready to use, all you need to do is to select your platform and follow the installation instructions.
 
-n2disk needs a license in order to operate permanently (i.e. not in demo mode). In order to  obtain a license, you need to go to http://shop.ntop.org and order it. Once you get the order, you need to generate the license based on your System ID, you can read it running n2disk:
+n2disk needs a license in order to operate permanently (unless you ask for a trial license). In order to  obtain a license, you need to go to http://shop.ntop.org and order it. Once you get the order, you need to generate the license based on your System ID, you can read it running n2disk:
 
 .. code-block:: console
 
