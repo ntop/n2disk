@@ -29,10 +29,19 @@ n2disk licenses are generated using the orderId and email you provided when the 
 Applying the License
 --------------------
 Once the license has been generated, it can be applied in order for
-n2disk to become fully-functional. The license must
-be placed in a one-line file :code:`/etc/n2disk.license`.
+n2disk to become fully functional. 
+There are two ways to do this:
 
+1. If you have ntopng and wish to closely couple n2disk with ntopng (both installed on the same server), you can apply the license via the ntopng section “Using ntopng with n2disk”_.
+
+2. Using n2disk as a stand-alone application, the license must be placed in a one-line file ``/etc/n2disk.license``.
+
+.. _Using ntopng with n2disk: https://www.ntop.org/guides/ntopng/using_with_other_tools/n2disk.html
+
+Both methods will enable n2disk operation with other ntop applications subject to the n2disk configuration including the  “-u=<app name>”...e.g.   “-u=ntopng”
+ 
 .. note::
 
-   An n2disk restart is recommended once the license has been applied
-   to make sure all the new functionalities will be unlocked.
+In either case an n2disk restart is recommended once the license has been applied to make sure all the new functionalities will be unlocked.
+
+The license must be placed in a one-line file :code:`/etc/n2disk.license`.
