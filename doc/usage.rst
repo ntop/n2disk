@@ -86,6 +86,8 @@ DUMP SETTINGS
    [--no-overwriting|-4]                         | Do not overwrite old files to make room for new ones.
    [--file-prefix|-x] <prefix>                   | Dump file prefix (ignored with --disk-limit).
    [--no-tmp-file|-5]                            | Do not write temporary .pcap.tmp files.
+   [--seqnum-file-prefix]                        | Add sequence as prefix to dumped file names.
+                                                 | Format: <seqnum>-<sec>.<usec>.pcap. Requires --disk-limit.
    [--hugepages|-U]                              | Use hugepages for memory allocation.
    [--disable-direct-io|-r]                      | Disable Direct I/O (experts only).
    [--stop-on-limit|-L][<mode>]                  | Stop capture when the specified limit is reached depending on the mode:
