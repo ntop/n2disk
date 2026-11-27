@@ -1,0 +1,186 @@
+{
+ "sidebar": [
+  {
+   "text": "User's Guide",
+   "items": [
+    {
+     "text": "Main Features",
+     "link": "/features"
+    },
+    {
+     "text": "Performance",
+     "link": "/performance"
+    },
+    {
+     "text": "Versions",
+     "link": "/versions"
+    },
+    {
+     "text": "Installation",
+     "link": "/installation"
+    },
+    {
+     "text": "Usage",
+     "link": "/usage"
+    },
+    {
+     "text": "How to Start n2disk",
+     "link": "/how_to_start"
+    },
+    {
+     "text": "Tuning",
+     "link": "/tuning/",
+     "items": [
+      {
+       "text": "Examples",
+       "link": "/tuning/examples"
+      },
+      {
+       "text": "Napatech Setup",
+       "link": "/tuning/napatech"
+      },
+      {
+       "text": "Silicom FPGA Setup",
+       "link": "/tuning/fiberblaze"
+      }
+     ],
+     "collapsed": true
+    },
+    {
+     "text": "Storage Sizing",
+     "link": "/storage_sizing"
+    },
+    {
+     "text": "Utilities",
+     "link": "/utilities/",
+     "items": [
+      {
+       "text": "disk2n",
+       "link": "/utilities/disk2n"
+      },
+      {
+       "text": "npcapindex",
+       "link": "/utilities/npcapindex"
+      },
+      {
+       "text": "npcapextract",
+       "link": "/utilities/npcapextract"
+      },
+      {
+       "text": "npcapdecompress",
+       "link": "/utilities/npcapdecompress"
+      },
+      {
+       "text": "npcapprintindex",
+       "link": "/utilities/npcapprintindex"
+      },
+      {
+       "text": "npcapmanage",
+       "link": "/utilities/npcapmanage"
+      },
+      {
+       "text": "npcapmove",
+       "link": "/utilities/npcapmove"
+      },
+      {
+       "text": "npcaprepair",
+       "link": "/utilities/npcaprepair"
+      },
+      {
+       "text": "ndedup",
+       "link": "/utilities/ndedup"
+      }
+     ],
+     "collapsed": true
+    },
+    {
+     "text": "Flows Export",
+     "link": "/using_with_ntopng"
+    },
+    {
+     "text": "Netflow and Raw Recording",
+     "link": "/netflow"
+    },
+    {
+     "text": "Packet Filtering",
+     "link": "/filters"
+    },
+    {
+     "text": "Disk Partitioning and Formatting",
+     "link": "/filesystem"
+    },
+    {
+     "text": "License",
+     "link": "/license"
+    }
+   ]
+  }
+ ],
+ "external": [
+  {
+   "text": "ntopng",
+   "link": "https://www.ntop.org/guides/ntopng/"
+  },
+  {
+   "text": "nProbe",
+   "link": "https://www.ntop.org/guides/nprobe/"
+  },
+  {
+   "text": "nProbe Cento",
+   "link": "https://www.ntop.org/guides/cento/"
+  },
+  {
+   "text": "nDPI",
+   "link": "https://www.ntop.org/guides/nDPI/"
+  },
+  {
+   "text": "PF_RING",
+   "link": "https://www.ntop.org/guides/pf_ring/"
+  },
+  {
+   "text": "nEdge",
+   "link": "https://www.ntop.org/guides/nedge/"
+  },
+  {
+   "text": "nScrub",
+   "link": "https://www.ntop.org/guides/nscrub/"
+  },
+  {
+   "text": "nBox",
+   "link": "https://www.ntop.org/guides/nbox/"
+  },
+  {
+   "text": "nTap",
+   "link": "https://www.ntop.org/guides/ntap/"
+  }
+ ],
+ "pages": {
+  "features": "Main Features",
+  "filesystem": "Disk Partitioning and Formatting",
+  "filters": "Packet Filtering",
+  "how_to_start": "How to Start n2disk",
+  "index": "n2disk Documentation",
+  "installation": "Installation",
+  "license": "License",
+  "netflow": "Netflow and Raw Recording",
+  "performance": "Performance",
+  "storage_sizing": "Storage Sizing",
+  "tuning/examples": "Examples",
+  "tuning/fiberblaze": "Silicom FPGA Setup",
+  "tuning/index": "Tuning",
+  "tuning/napatech": "Napatech Setup",
+  "usage": "Usage",
+  "using_with_ntopng": "Flows Export",
+  "utilities/disk2n": "disk2n",
+  "utilities/index": "Utilities",
+  "utilities/ndedup": "ndedup",
+  "utilities/npcapdecompress": "npcapdecompress",
+  "utilities/npcapextract": "npcapextract",
+  "utilities/npcapindex": "npcapindex",
+  "utilities/npcapmanage": "npcapmanage",
+  "utilities/npcapmove": "npcapmove",
+  "utilities/npcapprintindex": "npcapprintindex",
+  "utilities/npcaprepair": "npcaprepair",
+  "versions": "Versions"
+ }
+}
