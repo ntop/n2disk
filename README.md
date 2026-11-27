@@ -1,4 +1,4 @@
-![ntop][n2disk_logo] ![ntop][ntop_logo]
+![n2disk_logo]
 # n2disk
 This repository contains open source components and extensions for n2disk available at http://www.ntop.org/products/traffic-recording-replay/n2disk/
 
